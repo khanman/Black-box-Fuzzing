@@ -1,0 +1,46 @@
+#! /usr/bin/env python
+# coding=utf8
+
+output = "mutate.pdf"
+tests = 100
+
+import sys
+import math
+import random
+import string
+import subprocess
+import time
+import os
+
+f = open("core_file.txt",'wb')
+clist = []
+
+for i in range(tests):
+    
+    file_choice = sys.argv[2]
+    buf = bytearray(open(file_choice, 'rb').read())
+    seed = int(sys.argv[1]) + i
+    random.seed(seed)    
+    numwrites = int(math.ceil((float(len(buf)))*0.04))
+    for j in range(numwrites):        
+        rbyte = random.randrange(256)
+        rn = random.randrange(len(buf))
+        buf[rn] = rbyte ^ 01
+
+    open(output, 'wb').write(buf)
+    app="/usr/bin/pdftotext"
+    process = subprocess.Popen([app, output],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    time.sleep(1)
+    crashed = process.poll()
+    if not crashed:
+        process.terminate()
+    time.sleep(1)
+    
+    # creates a core_file which contains config_value and core.pid
+    for file in os.listdir(os.getcwd()):
+       if file.startswith("core."):
+          if clist.count(file) == 0:
+                clist.append(file)
+                f.write(str(seed)+" "+file+"\n")
+f.close()    
+
